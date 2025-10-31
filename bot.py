@@ -1,7 +1,8 @@
 import requests
 import logging
+import time
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 def open_or_create_accounts_txt() -> list:
     """
@@ -57,7 +58,7 @@ def get_user_info(token: str) -> dict:
     """
     user_info_url = "https://api.rausgegangen.de/rausgegangen/api/v2/user"
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Token {token}"
     }
     response = requests.get(user_info_url, headers=headers)
     response.raise_for_status()
@@ -75,7 +76,7 @@ def subevent_favourite(token: str, subevent_id: int) -> bool:
     """
     favourite_url = "https://api.rausgegangen.de/rausgegangen/api/v2/subevent/favorite"
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Token {token}"
     }
     payload = {
         "id": subevent_id
@@ -96,7 +97,7 @@ def lottery_participate(token: str, lottery_id: int) -> bool:
     """
     lottery_url = "https://api.rausgegangen.de/rausgegangen/api/v2/lottery/participate"
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Token {token}"
     }
     payload = {
         "id": lottery_id
@@ -117,7 +118,7 @@ def get_subevent_details(token: str, subevent_id: int) -> dict:
     """
     details_url = f"https://api.rausgegangen.de/rausgegangen/api/v2/subevents/{subevent_id}"
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Token {token}"
     }
     response = requests.get(details_url, headers=headers)
     response.raise_for_status()
@@ -130,11 +131,37 @@ def get_subevent_details(token: str, subevent_id: int) -> dict:
     
 if __name__ == "__main__":
     accounts = open_or_create_accounts_txt()
-    for account_line in accounts:
+    events = []
+
+    if len(accounts) == 1:
+        logging.warning("Only the main account is present. No additional accounts to participate in lotteries.")
+
+    for idx, account_line in enumerate(accounts):
         account, password = account_line.split(":")
         token = login(account, password)
+        logging.debug(f"Token for account {account}: {token}")
         if token:
             user_info = get_user_info(token)
-            logging.info(f"User Info: {user_info}")
-            lotteries = user_info.get("participated_active_lotteries", [])
-            logging.info(f"Participated Lotteries: {lotteries}")
+            logging.debug(f"User Info: {user_info}")
+            if idx == 0:
+                events = user_info.get("participated_active_lotteries", [])
+                logging.info(f"Participated Lotteries for main account {account}: {events}")
+            else:
+                logging.debug(f"Account {account} not main account, proceeding to participate in lotteries.")
+                for event_id in events:
+                    logging.debug(f"Attempting to participate in event {event_id} for account {account}.")
+                    # check if already participated
+                    if event_id in user_info.get("participated_lotteries", []):
+                        logging.info(f"Account {account} already participated in event {event_id}.")
+                        continue
+                    lottery_id = get_subevent_details(token, event_id)["lottery_id"]
+                    logging.debug(f"Lottery ID for event {event_id}: {lottery_id}")
+                    success = lottery_participate(token, lottery_id)
+                    if success:
+                        logging.info(f"Account {account} successfully participated in event {event_id}.")
+                    else:
+                        logging.error(f"Account {account} failed to participate in event {event_id}.")
+                    time.sleep(5)  # To avoid hitting rate limits
+        else:
+            logging.error(f"Skipping account {account} due to login failure.")
+        time.sleep(20)  # To avoid hitting rate limits

@@ -2,7 +2,7 @@ import requests
 import logging
 import time
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 def open_or_create_accounts_txt() -> list:
     """

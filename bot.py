@@ -157,10 +157,6 @@ if __name__ == "__main__":
                     lottery_id = get_subevent_details(token, event_id)["lottery_id"]
                     logging.debug(f"Lottery ID for event {event_id}: {lottery_id}")
                     success = lottery_participate(token, lottery_id)
-                    if success:
-                        logging.info(f"Account {account} successfully participated in event {event_id}.")
-                    else:
-                        logging.error(f"Account {account} failed to participate in event {event_id}.")
                     time.sleep(5)  # To avoid hitting rate limits
         else:
             logging.error(f"Skipping account {account} due to login failure.")

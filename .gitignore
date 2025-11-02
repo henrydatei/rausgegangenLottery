@@ -207,3 +207,4 @@ marimo/_lsp/
 __marimo__/
 
 accounts.txt
+create_account.py

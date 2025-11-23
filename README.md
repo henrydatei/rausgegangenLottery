@@ -52,6 +52,9 @@ SPOOKY JUICE I +21 Edition
 - sometimes every winner claims its price, so no mail is send
 
 ## Create more accounts
+
+**This method is already fixed!! Currently in the look for a new one**
+
 I have a script locally that can create accounts but there are some things in it which I don't want to share publicly. I suggest using Googlemail oder Microsoft's live as an email provider because the have a unique feature: If your email is `example@gmail.com` than, instead of entering this mail, you can enter `example+rausgegangen1@gmail.com` as email. The key thing is: whatever is send to `example+rausgegangen1@gmail.com` will land in your inbox and you can apply filter rules etc to sort your email. You don't have to register that in Googlemail, it just works out of the box. [Source](https://www.streak.com/post/gmail-plus-addressing-trick) 
 
 [Works with dots in a similar way](https://support.google.com/mail/answer/7436150)

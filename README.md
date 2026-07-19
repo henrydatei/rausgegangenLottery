@@ -102,3 +102,10 @@ if __name__ == "__main__":
 ```
 
 You can add more features like automatically add it to your password manager, etc.
+
+## Finding events automatically
+
+Events are sometimes added on a short notice. To get the most out of rausgegangen.de, you would need to check daily the website or app for new events. I have created a simple script that can do this for you and match events on a whitelist basis for tags and categories. If you want to use this, you have to make a few changes to the script (`find_events.py`), especially the `WHITELIST_TAGS` and `WHITELIST_CATEGORIES` variables. And you need to change the search URL and enter your city and GPS coordinates. Currently it is set to Frankfurt, Germany:
+```
+https://api.rausgegangen.de/rausgegangen/api/v2/geospatial-search?city=frankfurt&geospatial_query_type=CITY&is_free_b=false&has_lottery_b=true&is_ticketing_b=false&rows=24&lat=50.11090895495324&lng=8.682125269925267&radius=5000
+```

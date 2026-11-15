@@ -25,7 +25,7 @@ def open_or_create_accounts_txt() -> list:
     logging.info(f"Loaded {len(accounts)} accounts from accounts.txt.")
     return [line.strip() for line in accounts]
 
-def login(account, password) -> str | None:
+def login(s: requests.Session, account, password) -> str | None:
     """
     Logs into the service using provided account credentials.
     Returns the authentication token if successful, otherwise None.
@@ -42,8 +42,7 @@ def login(account, password) -> str | None:
         "deviceType": "ios",
         "identifier": "D6A8295E-690F-44FA-B2C5-5C581BD5DA17"
     }
-    response = requests.post(login_url, json=payload, headers=headers)
-    response.raise_for_status()
+    response = s.post(login_url, json=payload, headers=headers)
     if response.status_code == 200:
         logging.info(f"Login successful for account: {account}")
         return response.json()["token"]
@@ -51,7 +50,7 @@ def login(account, password) -> str | None:
         logging.error(f"Login failed for account: {account}. Error: {response.text}")
         return None
     
-def get_user_info(token: str) -> dict:
+def get_user_info(s: requests.Session, token: str) -> dict:
     """
     Fetches user information using the provided authentication token.
     Returns a dictionary with user information.
@@ -60,8 +59,7 @@ def get_user_info(token: str) -> dict:
     headers = {
         "Authorization": f"Token {token}"
     }
-    response = requests.get(user_info_url, headers=headers)
-    response.raise_for_status()
+    response = s.get(user_info_url, headers=headers)
     if response.status_code == 200:
         logging.info("User information retrieved successfully.")
         return response.json()["user"]
@@ -69,7 +67,7 @@ def get_user_info(token: str) -> dict:
         logging.error(f"Failed to retrieve user information. Error: {response.text}")
         return {}
     
-def subevent_favourite(token: str, subevent_id: int) -> bool:
+def subevent_favourite(s: requests.Session, token: str, subevent_id: int) -> bool:
     """
     Marks a subevent as favorite using the provided authentication token and subevent ID.
     Returns True if successful, otherwise False.
@@ -81,8 +79,7 @@ def subevent_favourite(token: str, subevent_id: int) -> bool:
     payload = {
         "id": subevent_id
     }
-    response = requests.post(favourite_url, headers=headers, json=payload)
-    response.raise_for_status()
+    response = s.post(favourite_url, headers=headers, json=payload)
     if response.status_code == 200:
         logging.info(f"Subevent {subevent_id} marked as favorite successfully.")
         return True
@@ -90,7 +87,7 @@ def subevent_favourite(token: str, subevent_id: int) -> bool:
         logging.error(f"Failed to mark subevent {subevent_id} as favorite. Error: {response.text}")
         return False
 
-def lottery_participate(token: str, lottery_id: int) -> bool:
+def lottery_participate(s: requests.Session, token: str, lottery_id: int) -> bool:
     """
     Participates in the lottery using the provided authentication token.
     Returns True if successful, otherwise False.
@@ -102,8 +99,7 @@ def lottery_participate(token: str, lottery_id: int) -> bool:
     payload = {
         "id": lottery_id
     }
-    response = requests.post(lottery_url, headers=headers, json=payload)
-    response.raise_for_status()
+    response = s.post(lottery_url, headers=headers, json=payload)
     if response.status_code == 200:
         logging.info("Lottery participation successful.")
         return True
@@ -111,7 +107,7 @@ def lottery_participate(token: str, lottery_id: int) -> bool:
         logging.error(f"Failed to participate in lottery. Error: {response.text}")
         return False
     
-def get_subevent_details(token: str, subevent_id: int) -> dict:
+def get_subevent_details(s: requests.Session, token: str, subevent_id: int) -> dict:
     """
     Fetches details of a subevent using the provided authentication token and subevent ID.
     Returns a dictionary with subevent details.
@@ -120,8 +116,7 @@ def get_subevent_details(token: str, subevent_id: int) -> dict:
     headers = {
         "Authorization": f"Token {token}"
     }
-    response = requests.get(details_url, headers=headers)
-    response.raise_for_status()
+    response = s.get(details_url, headers=headers)
     if response.status_code == 200:
         logging.info(f"Subevent {subevent_id} details retrieved successfully.")
         return response.json()
@@ -138,10 +133,11 @@ if __name__ == "__main__":
 
     for idx, account_line in enumerate(accounts):
         account, password = account_line.split(":")
-        token = login(account, password)
+        session = requests.Session()
+        token = login(session, account, password)
         logging.debug(f"Token for account {account}: {token}")
         if token:
-            user_info = get_user_info(token)
+            user_info = get_user_info(session, token)
             logging.debug(f"User Info: {user_info}")
             if idx == 0:
                 events = user_info.get("participated_active_lotteries", [])
@@ -154,9 +150,9 @@ if __name__ == "__main__":
                     if event_id in user_info.get("participated_lotteries", []):
                         logging.info(f"Account {account} already participated in event {event_id}.")
                         continue
-                    lottery_id = get_subevent_details(token, event_id)["lottery_id"]
+                    lottery_id = get_subevent_details(session, token, event_id)["lottery_id"]
                     logging.debug(f"Lottery ID for event {event_id}: {lottery_id}")
-                    success = lottery_participate(token, lottery_id)
+                    success = lottery_participate(session, token, lottery_id)
                     time.sleep(5)  # To avoid hitting rate limits
         else:
             logging.error(f"Skipping account {account} due to login failure.")
